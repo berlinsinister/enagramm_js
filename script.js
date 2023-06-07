@@ -4,7 +4,27 @@ class Enagramm {
     this.punctuation = ['.', '!', '?', ';', ',', ' ']; // ordered by priority
     this.sentences = [];
     this.accessToken = '';
-    this.audioFiles = [];
+
+    this.isResultReceived = false;
+    this.isLoggingEnagled = false;
+    this.callback = null;
+    this.finalResult = '';
+  }
+
+  get getIsResultReceived() {
+    return this.isResultReceived;
+  }
+
+  set setIsResultReceived(audioFile) {
+    this.isResultReceived = audioFile;
+    if (this.isResultReceived && this.isLoggingEnagled) {
+      this.callback(audioFile);
+    }
+  }
+
+  onResult(_, callback) {
+    this.isLoggingEnagled = true;
+    this.callback = callback;
   }
 
   async getAccessToken() {
@@ -57,11 +77,6 @@ class Enagramm {
     }
   }
 
-  onResult(result) {
-    const myResult = result;
-    this.audioFiles.push(myResult);
-  }
-
   async start() {
     await this.getAccessToken();
 
@@ -104,10 +119,11 @@ class Enagramm {
         IterationCount: 2,
       };
 
+      this.setIsResultReceived = false;
+
       try {
         const audio = await this.getAudioFilePath(model);
-        console.log('audio:', i, audio);
-        this.onResult(audio);
+        this.setIsResultReceived = audio;
       } catch (error) {
         console.error(error);
       }
@@ -124,3 +140,7 @@ myText.text = `კლასის აღწერა: Javascript კლასი
 `;
 
 myText.start();
+myText.onResult('result', function (result) {
+  this.finalResult = result;
+  console.log('Audio file: ' + this.finalResult);
+});
